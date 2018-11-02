@@ -457,12 +457,18 @@ func postVerifactionData(userId string, filename string) error {
 	}
 
 	//read file and write data to form
-	srcFile, err := os.Open(filename)
-	if err != nil {
-		utils.Fatalf("Open source file failed: %s\n", err)
+	//The file name may be a string separated by a semicolon
+	fileArr := strings.Split(filename, ";")
+
+	for _, v := range fileArr {
+		srcFile, err := os.Open(v)
+		if err != nil {
+			utils.Fatalf("Open source file failed: %s\n", err)
+		}
+		_, err = io.Copy(formFile, srcFile)
+
+		srcFile.Close()
 	}
-	defer srcFile.Close()
-	_, err = io.Copy(formFile, srcFile)
 
 	//add user data field
 	idField, err := writer.CreateFormField("data")

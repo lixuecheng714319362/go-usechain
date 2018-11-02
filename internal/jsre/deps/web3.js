@@ -4035,6 +4035,7 @@ var outputPostFormatter = function(post){
 };
 
 var inputAddressFormatter = function (address) {
+    console.log(address)
     var iban = new Iban(address);
     if (iban.isValid() && iban.isDirect()) {
         return '0x' + iban.address();
@@ -5745,6 +5746,18 @@ function Personal(web3) {
 }
 
 var methods = function () {
+    var verify = new Method({
+        name: 'verify',
+        call: 'personal_verify',
+        params: 2,
+        inputFormatter: [null, null]
+    });
+    var verifyQuery = new Method({
+        name: 'verifyQuery',
+        call: 'personal_verifyQuery',
+        params: 1,
+        inputFormatter: [null]
+    });
     var newAccount = new Method({
         name: 'newAccount',
         call: 'personal_newAccount',
@@ -5808,6 +5821,8 @@ var methods = function () {
     });
 
     return [
+        verify,
+        verifyQuery,
         newAccount,
         importRawKey,
         unlockAccount,

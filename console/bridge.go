@@ -23,10 +23,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/robertkrimen/otto"
 	"github.com/usechain/go-usechain/accounts/usbwallet"
 	"github.com/usechain/go-usechain/log"
 	"github.com/usechain/go-usechain/rpc"
-	"github.com/robertkrimen/otto"
 )
 
 // bridge is a collection of JavaScript utility methods to bride the .js runtime
@@ -44,6 +44,65 @@ func newBridge(client *rpc.Client, prompter UserPrompter, printer io.Writer) *br
 		prompter: prompter,
 		printer:  printer,
 	}
+}
+
+//Verify is  user register function
+func (b *bridge) Verify(call otto.FunctionCall) (response otto.Value) {
+	var (
+		id    string
+		photo string
+		err   error
+	)
+	switch {
+
+	// A single string password was specified, use that
+	case len(call.ArgumentList) == 2 && call.Argument(1).IsString() && call.Argument(0).IsString():
+		id, _ = call.Argument(0).ToString()
+		if len(id) == 0 {
+			throwJSException("user id can not be empty.")
+		}
+		photo, _ = call.Argument(1).ToString()
+		if len(photo) == 0 {
+			throwJSException("photopath can not be empty.")
+		}
+
+	// Otherwise fail with some error
+	default:
+		throwJSException("expected 2 string argument")
+	}
+	// Password acquired, execute the call and return
+	ret, err := call.Otto.Call("jeth.verify", nil, id, photo)
+	if err != nil {
+		throwJSException(err.Error())
+	}
+	return ret
+}
+
+//VerifyQuery supports user querys his ca information after register and get ca file.
+func (b *bridge) VerifyQuery(call otto.FunctionCall) (response otto.Value) {
+	var (
+		ID  string
+		err error
+	)
+	switch {
+
+	// A single string password was specified, use that
+	case len(call.ArgumentList) == 1 && call.Argument(0).IsString():
+		ID, _ = call.Argument(0).ToString()
+		if len(ID) == 0 {
+			throwJSException("user ID can not be empty.")
+		}
+
+	// Otherwise fail with some error
+	default:
+		throwJSException("expected 1 string argument")
+	}
+	// Password acquired, execute the call and return
+	ret, err := call.Otto.Call("jeth.verifyQuery", nil, ID)
+	if err != nil {
+		throwJSException(err.Error())
+	}
+	return ret
 }
 
 // NewAccount is a wrapper around the personal.newAccount RPC method that uses a
@@ -121,7 +180,7 @@ func (b *bridge) NewABaccount(call otto.FunctionCall) (response otto.Value) {
 		throwJSException("expected 1 or 2 argument")
 	}
 	// Password acquired, execute the call and return
-	ret, err := call.Otto.Call("jeth.newABaccount", nil, account,password)
+	ret, err := call.Otto.Call("jeth.newABaccount", nil, account, password)
 	if err != nil {
 		throwJSException(err.Error())
 	}

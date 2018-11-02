@@ -33,6 +33,10 @@ type Account struct {
 	URL     URL            `json:"url"`     // Optional resource locator within a backend
 }
 
+type caReg interface {
+	CAVerify()
+}
+
 // Wallet represents a software or hardware wallet that might contain one or more
 // accounts (derived from the same seed).
 type Wallet interface {
