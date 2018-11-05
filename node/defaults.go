@@ -75,3 +75,9 @@ func homeDir() string {
 	}
 	return ""
 }
+
+//PathSeparator Returns the corresponding path separator depending on the OS.
+func PathSeparator() string {
+
+	return string(os.PathSeparator)
+}
