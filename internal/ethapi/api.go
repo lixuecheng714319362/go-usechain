@@ -55,6 +55,10 @@ import (
 	"github.com/usechain/go-usechain/node"
 
 	"crypto/rand"
+<<<<<<< HEAD
+=======
+
+>>>>>>> 27f49b66dc2a111fc52a2da24a242b197f973073
 )
 
 const (
@@ -1654,8 +1658,10 @@ func (s *PublicBlockChainAPI) GetOneTimePubSet(ctx context.Context, contracrAddr
 	if stateDb == nil || err != nil {
 		return "", err
 	}
+
 	//pub,err:= stateDb.GetOneTimePubSet(contracrAddress, PubKeyLen)
 	pub, err := authentication.GetOneTimePubSetInterface(stateDb, contracrAddress, PubKeyLen)
+
 	if err != nil {
 		log.Error("GetOneTimePubSet error: ", "error", err)
 	}
@@ -1668,8 +1674,15 @@ func (s *PublicBlockChainAPI) GetUnConfirmedMainInfo(ctx context.Context, contra
 	if stateDb == nil || err != nil {
 		return "", err
 	}
+<<<<<<< HEAD
 	//pub,err:= stateDb.GetUnConfirmedMainInfo(contracrAddress, PubKeyLen,pos)
 	pub, err := authentication.GetUnConfirmedMainInfoInterface(stateDb, contracrAddress, PubKeyLen, pos)
+=======
+
+	//pub,err:= stateDb.GetUnConfirmedMainInfo(contracrAddress, PubKeyLen,pos)
+	pub, err := authentication.GetUnConfirmedMainInfoInterface(stateDb, contracrAddress, PubKeyLen, pos)
+
+>>>>>>> 27f49b66dc2a111fc52a2da24a242b197f973073
 	if err != nil {
 		log.Error("GetUnConfirmedMainInfo error: ", "error", err)
 	}
@@ -1682,8 +1695,15 @@ func (s *PublicBlockChainAPI) GetConfirmedMainInfo(ctx context.Context, contracr
 	if stateDb == nil || err != nil {
 		return "", err
 	}
+<<<<<<< HEAD
 	//pub,err:= stateDb.GetConfirmedMainInfo(contracrAddress, PubKeyLen,pos)
 	pub, err := authentication.GetConfirmedMainInfoInterface(stateDb, contracrAddress, PubKeyLen, pos)
+=======
+
+	//pub,err:= stateDb.GetConfirmedMainInfo(contracrAddress, PubKeyLen,pos)
+	pub, err := authentication.GetConfirmedMainInfoInterface(stateDb, contracrAddress, PubKeyLen, pos)
+
+>>>>>>> 27f49b66dc2a111fc52a2da24a242b197f973073
 	if err != nil {
 		log.Error("GetConfirmedMainInfo error: ", "error", err)
 	}
@@ -1696,8 +1716,15 @@ func (s *PublicBlockChainAPI) GetConfirmedMainAS(ctx context.Context, contracrAd
 	if stateDb == nil || err != nil {
 		return "", err
 	}
+<<<<<<< HEAD
 	//pub,err:= stateDb.GetConfirmedMainAS(contracrAddress, KeyLen,pos)
 	pub, err := authentication.GetConfirmedMainASInterface(stateDb, contracrAddress, KeyLen, pos)
+=======
+
+	//pub,err:= stateDb.GetConfirmedMainAS(contracrAddress, KeyLen,pos)
+	pub, err := authentication.GetConfirmedMainASInterface(stateDb, contracrAddress, KeyLen, pos)
+
+>>>>>>> 27f49b66dc2a111fc52a2da24a242b197f973073
 	if err != nil {
 		log.Error("GetConfirmedMainAS error: ", "error", err)
 	}
@@ -1762,12 +1789,22 @@ func (s *PublicTransactionPoolAPI) SendMainTransaction(ctx context.Context, addr
 	if statedb == nil || err != nil {
 		log.Error("statedb error: ", "error", err)
 	}
+<<<<<<< HEAD
+=======
+
+>>>>>>> 27f49b66dc2a111fc52a2da24a242b197f973073
 	//ringsig,keyImage,err:=fetchKeystore(am).GenRingSignData(accountOTA,args.From)
 	privateKey, addr, msg := fetchKeystore(am).GetRingSignInfo(accountOTA, args.From)
 
 	ringsig, keyImage, err := authentication.GenRingSignData(msg, privateKey, addr, statedb)
+<<<<<<< HEAD
 	if err != nil {
 		return common.Hash{}, err
+=======
+	if err !=nil{
+		return common.Hash{},err
+
+>>>>>>> 27f49b66dc2a111fc52a2da24a242b197f973073
 	}
 
 	myAbi, err := abi.JSON(strings.NewReader(common.UsechainABI))
@@ -1830,6 +1867,10 @@ func (s *PublicTransactionPoolAPI) SendSubTransaction(ctx context.Context, addre
 	if statedb == nil || err != nil {
 		log.Error("statedb error: ", "error", err)
 	}
+<<<<<<< HEAD
+=======
+
+>>>>>>> 27f49b66dc2a111fc52a2da24a242b197f973073
 	//ringsig,keyImage,err:=fetchKeystore(am).GenRingSignData(accountOTA,args.From,statedb)
 
 	privateKey, addr, msg := fetchKeystore(am).GetRingSignInfo(accountOTA, args.From)
@@ -1838,6 +1879,10 @@ func (s *PublicTransactionPoolAPI) SendSubTransaction(ctx context.Context, addre
 	if err != nil {
 		return common.Hash{}, err
 	}
+<<<<<<< HEAD
+=======
+
+>>>>>>> 27f49b66dc2a111fc52a2da24a242b197f973073
 
 	myAbi, err := abi.JSON(strings.NewReader(common.UsechainABI))
 	if err != nil {
@@ -1866,3 +1911,7 @@ func (s *PublicTransactionPoolAPI) SendSubTransaction(ctx context.Context, addre
 	}
 	return submitTransaction(ctx, s.b, signed)
 }
+<<<<<<< HEAD
+=======
+
+>>>>>>> 27f49b66dc2a111fc52a2da24a242b197f973073
