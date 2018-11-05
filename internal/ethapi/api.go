@@ -1776,6 +1776,7 @@ func (s *PublicTransactionPoolAPI) SendMainTransaction(ctx context.Context, addr
 	ringsig, keyImage, err := authentication.GenRingSignData(msg, privateKey, addr, statedb)
 	if err != nil {
 		return common.Hash{}, err
+
 	}
 
 	myAbi, err := abi.JSON(strings.NewReader(common.UsechainABI))
