@@ -567,7 +567,7 @@ func (ks *KeyStore) NewMainAccount(passphrase string) (accounts.Account, common.
 		return accounts.Account{}, common.ABaddress{}, errors.New("ABaddressLength is not equal")
 	}
 
-	key, account, err := storeNewABKey(ks.storage, *abBaseAddr, AprivKey, passphrase)
+	key, account, err := storeNewABKey(ks.storage, *abBaseAddr, AprivKey, passphrase, true)
 	if err != nil {
 		log.Error("NewMainAccount err: ", "err", err)
 		return accounts.Account{}, common.ABaddress{}, err
@@ -592,7 +592,7 @@ func (ks *KeyStore) NewABaccount(A accounts.Account, passphrase string) (account
 		return accounts.Account{}, common.ABaddress{}, err
 	}
 
-	key, account, err := storeNewABKey(ks.storage, abBaseAddr, AprivKey, passphrase)
+	key, account, err := storeNewABKey(ks.storage, abBaseAddr, AprivKey, passphrase, false)
 	if err != nil {
 		log.Error("NewABaccount err: ", "err", err)
 		return accounts.Account{}, common.ABaddress{}, err

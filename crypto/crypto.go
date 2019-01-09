@@ -206,7 +206,7 @@ func zeroBytes(bytes []byte) {
 }
 
 // Generate account interface
-func GenerateABKey(AX string, AY string, BX string, BY string, AprivKey *ecdsa.PrivateKey) (ret []string, s *ecdsa.PrivateKey, err error) {
+func GenerateABKey(AX string, AY string, BX string, BY string,AprivKey *ecdsa.PrivateKey, flag bool) (ret []string,s *ecdsa.PrivateKey, err error) {
 	bytesAX, err := hexutil.Decode(AX)
 	if err != nil {
 		return
@@ -230,7 +230,7 @@ func GenerateABKey(AX string, AY string, BX string, BY string, AprivKey *ecdsa.P
 
 	pa := &ecdsa.PublicKey{X: bnAX, Y: bnAY}
 	pb := &ecdsa.PublicKey{X: bnBX, Y: bnBY}
-	generatedA1, generatedS, s, err := GenerateABKey2528(pa, pb, AprivKey)
+	generatedA1, generatedS,s, err := GenerateABKey2528(pa, pb, AprivKey, flag)
 
 	A1 := common.ToHex(FromECDSAPub(generatedA1))
 	SS := common.ToHex(FromECDSAPub(generatedS))
@@ -254,21 +254,21 @@ func GenerateSubAccount(bA *ecdsa.PublicKey, S *ecdsa.PublicKey) common.Address 
 }
 
 // GenerateABKey2528 generates an OTA account for receiver using receiver's publickey
-func GenerateABKey2528(A *ecdsa.PublicKey, B *ecdsa.PublicKey, AprivKey *ecdsa.PrivateKey) (A1 *ecdsa.PublicKey, S *ecdsa.PublicKey, s *ecdsa.PrivateKey, err error) {
+func GenerateABKey2528(A *ecdsa.PublicKey, B *ecdsa.PublicKey, AprivKey *ecdsa.PrivateKey, flag bool) (A1 *ecdsa.PublicKey, S *ecdsa.PublicKey,s *ecdsa.PrivateKey, err error) {
 	s, err = GenerateKey()
 	if err != nil {
 		return nil, nil, nil, err
 	}
 	S = &s.PublicKey
 	A1 = new(ecdsa.PublicKey)
-	*A1 = generateA1(S, B, AprivKey)
-	return A1, S, s, err
+	*A1 = generateA1(S, B, AprivKey, flag)
+	return A1, S,s,err
 }
 
 // A1=[hash([b]A)]G+S
 func ScanA1(b []byte, A *ecdsa.PublicKey, S *ecdsa.PublicKey) ecdsa.PublicKey {
 	bPriv, _ := toECDSA(b, true)
-	return generateA1(S, A, bPriv)
+	return generateA1(S, A, bPriv, false)
 }
 
 // A1=[hash([b]A)]G+S
@@ -288,16 +288,17 @@ func ScanPubSharesA1(bA *ecdsa.PublicKey, S *ecdsa.PublicKey) ecdsa.PublicKey {
 }
 
 // generateA1 generate one pulic key of AB account by using algorithm A1=[hash([a]B)]G+S
-func generateA1(S *ecdsa.PublicKey, B *ecdsa.PublicKey, AprivKey *ecdsa.PrivateKey) ecdsa.PublicKey {
+func generateA1(S *ecdsa.PublicKey, B *ecdsa.PublicKey, AprivKey *ecdsa.PrivateKey, flag bool) ecdsa.PublicKey {
 	A1 := new(ecdsa.PublicKey)
 
 	A1.X, A1.Y = S256().ScalarMult(B.X, B.Y, AprivKey.D.Bytes()) //A1=[a]B
 
 	A1Bytes := Keccak256(FromECDSAPub(A1)) //hash([a]B)
 
-	A1.X, A1.Y = S256().ScalarBaseMult(A1Bytes) //[hash([a]B)]G
-
-	A1.X, A1.Y = S256().Add(A1.X, A1.Y, S.X, S.Y) //A1=[hash([a]B)]G+S
+	A1.X, A1.Y = S256().ScalarBaseMult(A1Bytes)   //[hash([a]B)]G
+	if !flag {
+		A1.X, A1.Y = S256().Add(A1.X, A1.Y, S.X, S.Y) //A1=[hash([a]B)]G+S
+	}
 	A1.Curve = S256()
 	return *A1
 }

@@ -282,9 +282,10 @@ func GenerateABaddressFromPK(A *ecdsa.PublicKey, B *ecdsa.PublicKey) *common.ABa
 }
 
 // storeNewABKey save AB account keystore file
-func storeNewABKey(ks keyStore,abBaseAddr common.ABaddress,AprivKey *ecdsa.PrivateKey, auth string) (*Key, accounts.Account, error) {
+// true: generate mainAccount by new method;false: generate mainAccount by old method;
+func storeNewABKey(ks keyStore,abBaseAddr common.ABaddress,AprivKey *ecdsa.PrivateKey, auth string, flag bool) (*Key, accounts.Account, error) {
 
-	key, err := newABKey(abBaseAddr,AprivKey)
+	key, err := newABKey(abBaseAddr, AprivKey, flag)
 	if err != nil {
 		return nil, accounts.Account{}, err
 	}
@@ -304,14 +305,14 @@ func ABkeyFileName(keyAddr common.ABaddress) string {
 }
 
 // newABKey generate ABaccount Key
-func newABKey(abBaseAddr common.ABaddress,AprivKey *ecdsa.PrivateKey) (*Key, error) {
+func newABKey(abBaseAddr common.ABaddress, AprivKey *ecdsa.PrivateKey, flag bool) (*Key, error) {
 	A, B, err := GeneratePKPairFromABaddress(abBaseAddr[:])
 	if err != nil {
 		return nil, err
 	}
 
 	PKPairStr := hexutil.PKPair2HexSlice(A, B)
-	SKOTA,s, err := crypto.GenerateABKey(PKPairStr[0], PKPairStr[1], PKPairStr[2], PKPairStr[3],AprivKey)
+	SKOTA,s, err := crypto.GenerateABKey(PKPairStr[0], PKPairStr[1], PKPairStr[2], PKPairStr[3], AprivKey, flag)
 	if err != nil {
 		return nil, err
 	}
