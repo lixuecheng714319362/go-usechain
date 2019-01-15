@@ -5755,6 +5755,7 @@ var methods = function () {
         params: 1,
         inputFormatter: [null]
     });
+    
     var newABaccount = new Method({
         name:'newABaccount',
         call:'personal_newABaccount',
@@ -13787,6 +13788,13 @@ module.exports = XMLHttpRequest;
                 inputFormatter: [formatters.inputTransactionFormatter]
             });
 
+            var sendSubRegisterTransaction = new Method({
+                name:'sendSubRegisterTransaction',
+                call:'use_sendSubRegisterTransaction',
+                params: 5,
+                inputFormatter: [null, null, null, null, formatters.inputTransactionFormatter]
+            });
+
             var getOneTimePubSet = new Method({
                 name: 'getOneTimePubSet',
                 call: 'use_getOneTimePubSet',
@@ -13827,6 +13835,7 @@ module.exports = XMLHttpRequest;
                 sendSubTransaction,
                 sendOneTimeTransaction,
                 sendCreditRegisterTransaction,
+                sendSubRegisterTransaction,
                 getOneTimePubSet,
                 getUnConfirmedMainInfo,
 

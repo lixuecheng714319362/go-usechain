@@ -6,10 +6,14 @@ contract CreditSystem is SignerRole{
 
     event NewUserRegister(address indexed addr, bytes32 indexed hash);
     event NewIdentity(address indexed addr, bytes32 indexed hash);
+    event NewSubRegister(address indexed subAddr, bytes indexed sig, bytes indexed mainAddr);
 
     mapping (address => UseID) IDs;
     mapping (bytes32 => UseData) DataSet;
+    mapping (address => SubRegList) SubRegs;
+    mapping (address => bytes[]) accountMapping;
     bytes32[] public unregister;
+    address[] public subUnverify;
 
     struct Hash {
         bytes32 hash;
@@ -34,6 +38,15 @@ contract CreditSystem is SignerRole{
     struct HashList {
         bytes32[] hashes;           // keccak(idtype + idnum)
         bool[] verifies;            // certificate's status
+    }
+    
+    struct SubRegList {
+        string publicKey;           //subAccount's publicKey
+        bytes encryptMsg;           //encrypted message with committe's Key
+        bytes mainAccount;          //encrypted mainAccount with committe's Key
+        bytes subAccount;           //encrypted subAccount with committe's Key
+        uint index;
+        uint verify;                //1:unverify; 2:verified; 3:verify failed
     }
 
 
@@ -139,5 +152,82 @@ contract CreditSystem is SignerRole{
                 }
             }
         return false;
+    }
+    
+    function subRegister(string publicKey, 
+                        bytes sig, 
+                        bytes main,
+                        bytes sub)
+        public
+        payable
+        returns(bool){
+            require(SubRegs[msg.sender].verify < 1 || SubRegs[msg.sender].verify > 2);
+            address subAddr = msg.sender;
+            
+            uint index = subUnverify.push(subAddr) - 1;
+            SubRegList memory srList = SubRegList(publicKey, sig, main, sub, index, 1);
+            
+            SubRegs[subAddr] = srList;
+            
+            emit NewSubRegister(subAddr, sig, main);
+            return true;
+    }
+    //if flag is true,it means verify success; if flag is false,it means verify failed.
+    function verifySubregs(address sub, address main, bool flag)
+        public
+        onlySigner
+        returns(bool) {
+            require(SubRegs[sub].verify == 1);
+            uint index = SubRegs[sub].index;
+            if(flag == true) {
+                SubRegs[sub].verify = 2;//verify success
+                accountMapping[sub].push(SubRegs[sub].mainAccount);
+                accountMapping[main].push(SubRegs[sub].subAccount);
+            } else {
+                SubRegs[sub].verify = 3;//verify failed
+            }
+            
+            subUnverify[index] = subUnverify[subUnverify.length - 1];
+            SubRegs[subUnverify[index]].index = index;
+            subUnverify.length--;
+            return true;
+    }
+    function getSubUnverify() 
+        public
+        onlySigner
+        view
+        returns(address[]) {
+            return subUnverify;
+    }
+    function getRelations(address addr) 
+        public
+        view
+        returns(bytes, uint, uint){
+            require(accountMapping[addr].length > 0);
+            bytes memory concat = strAllConcat(accountMapping[addr]);
+            return (concat, accountMapping[addr].length, concat.length);
+    }
+    function strAllConcat(bytes[] bs)
+        internal
+        pure
+        returns(bytes) {
+            uint len;
+            for (uint i = 0; i < bs.length; i++) {
+                len = len + bs[i].length;
+            }
+            bytes memory bret = new bytes(len);
+            uint index1;
+            uint index2;
+            for (uint j = 0; j < bs.length;) {
+                bytes memory tmp = bs[j];
+                if (index1 < tmp.length) {
+                    bret[index2++] =  tmp[index1];
+                    index1++;
+                } else {
+                    index1 = 0;
+                    j++;
+                }
+            }
+            return bret;
     }
 }
