@@ -22,16 +22,17 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"io"
+	"math/big"
+	"strings"
+	"sync/atomic"
+
 	"github.com/usechain/go-usechain/accounts/abi"
 	"github.com/usechain/go-usechain/common"
 	"github.com/usechain/go-usechain/common/hexutil"
 	"github.com/usechain/go-usechain/crypto"
 	"github.com/usechain/go-usechain/log"
 	"github.com/usechain/go-usechain/rlp"
-	"io"
-	"math/big"
-	"strings"
-	"sync/atomic"
 )
 
 //go:generate gencodec -type txdata -field-override txdataMarshaling -out gen_tx_json.go
@@ -242,6 +243,13 @@ func (tx *Transaction) IsSubAuthentication() bool {
 	return true
 }
 
+func (tx *Transaction) IsSubRegTransaction() bool {
+	if bytes.Compare(tx.Data()[:4], []byte{237, 7, 110, 179}) == 0 {
+		return true
+	}
+	return false
+}
+
 func (tx *Transaction) IsRegisterTransaction() bool {
 
 	// if len(tx.Data()) <= 4+32*10 {
@@ -276,12 +284,12 @@ func (tx *Transaction) IsAuthentication() bool {
 	return true
 }
 
-func (tx *Transaction) CheckCertLegality(_from common.Address) error {
+func (tx *Transaction) getInputData(methodName string) ([]interface{}, error) {
 	creditABI, _ := abi.JSON(strings.NewReader(common.CreditABI))
 
-	method, exist := creditABI.Methods["register"]
+	method, exist := creditABI.Methods[methodName]
 	if !exist {
-		log.Error("method not found:", "register")
+		log.Error("method not found:", method)
 	}
 
 	InputDataInterface, err := method.Inputs.UnpackABI(tx.Data()[4:])
@@ -293,6 +301,22 @@ func (tx *Transaction) CheckCertLegality(_from common.Address) error {
 	for _, param := range InputDataInterface {
 		inputData = append(inputData, param)
 	}
+	return inputData, err
+}
+func (tx *Transaction) CheckSubRegTxLegality(from common.Address) error {
+	inputData, err := tx.getInputData("subRegister")
+	pubKeyStr, _ := inputData[0].(string)
+
+	pubHex, _ := hexutil.Decode(pubKeyStr)
+	pubKey := crypto.ToECDSAPub(pubHex)
+	if crypto.PubkeyToAddress(*pubKey) != from {
+		return errors.New("the pubkey & address doesn't match")
+	}
+	return err
+}
+
+func (tx *Transaction) CheckCertLegality(_from common.Address) error {
+	inputData, err := tx.getInputData("register")
 
 	// pubKey := inputData[0]
 	hashKey := "0x" + B2S(inputData[1].([32]uint8))

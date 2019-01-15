@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
+	"github.com/usechain/go-usechain/accounts"
 	"github.com/usechain/go-usechain/common"
 	"github.com/usechain/go-usechain/common/hexutil"
 	"github.com/usechain/go-usechain/crypto"
@@ -84,4 +85,11 @@ func GetIdentityData(ud UserData, pubKey *ecdsa.PublicKey) []byte {
 	d, _ := json.Marshal(&identity)
 
 	return d
+}
+
+func (s *PublicTransactionPoolAPI) getKey(address common.Address) (priKey *ecdsa.PrivateKey, err error) {
+	account := accounts.Account{Address: address}
+	ks := fetchKeystore(s.b.AccountManager())
+	priKey, err = ks.GetPrivateKey(account)
+	return
 }

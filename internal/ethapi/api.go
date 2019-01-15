@@ -43,6 +43,7 @@ import (
 	"github.com/usechain/go-usechain/core/vm"
 	"github.com/usechain/go-usechain/crypto"
 	"github.com/usechain/go-usechain/crypto/ecies"
+	"github.com/usechain/go-usechain/crypto/secp256k1"
 	"github.com/usechain/go-usechain/log"
 	"github.com/usechain/go-usechain/p2p"
 	"github.com/usechain/go-usechain/params"
@@ -337,6 +338,83 @@ func (s *PrivateAccountAPI) NewMainAccount(password string) (common.Address, err
 		return acc.Address, nil
 	}
 	return common.Address{}, err
+}
+
+func (s *PublicTransactionPoolAPI) SendSubRegisterTransaction(ctx context.Context, mainAddress common.Address, txr, authr, commr string, args SendTxArgs) (common.Hash, error) {
+
+	//get subAccount's publicKey
+	subPriKey, err := s.getKey(args.From)
+	if err != nil {
+		return common.Hash{}, err
+	}
+	subPubKey := &subPriKey.PublicKey
+	smsg := crypto.Keccak256(crypto.FromECDSAPub(subPubKey))
+
+	mainPriKey, err := s.getKey(mainAddress)
+	if err != nil {
+		return common.Hash{}, err
+	}
+
+	//get signature
+	sigBytes, err := secp256k1.Sign(smsg, crypto.FromECDSA(mainPriKey))
+	if err != nil {
+		return common.Hash{}, err
+	}
+	msg := hex.EncodeToString(sigBytes)
+	plainText := fmt.Sprintf("%v\n%v,%v,%v", msg, txr, authr, commr)
+	BTObyte, _ := hexutil.Decode(B)
+	commKey := crypto.ToECDSAPub(BTObyte)
+	cipherText, err := EncryptUserData([]byte(plainText), commKey)
+	if err != nil {
+		return common.Hash{}, err
+	}
+
+	timeStr := fmt.Sprintf("%v", time.Now().Unix())
+	//encrypt subAddress and mainAddress with committee's key
+	encMainAddr, err := EncryptUserData([]byte(mainAddress.Hex()+timeStr), commKey)
+	if err != nil {
+		return common.Hash{}, err
+	}
+	encSubAddr, err := EncryptUserData([]byte(args.From.Str()+timeStr), commKey)
+	if err != nil {
+		return common.Hash{}, err
+	}
+
+	// Look up the wallet containing the requested signer
+	account := accounts.Account{Address: args.From}
+
+	wallet, err := s.b.AccountManager().Find(account)
+	if err != nil {
+		return common.Hash{}, err
+	}
+
+	if args.Nonce == nil {
+		// Hold the addresse's mutex around signing to prevent concurrent assignment of
+		// the same nonce to multiple accounts.
+		s.nonceLock.LockAddr(args.From)
+		defer s.nonceLock.UnlockAddr(args.From)
+	}
+	// Set some sanity defaults and terminate on failure
+	if err := args.setDefaults(ctx, s.b); err != nil {
+		return common.Hash{}, err
+	}
+
+	bytesData := GetABIBytesData(common.CreditABI, "subRegister", common.ToHex(crypto.FromECDSAPub(subPubKey)), cipherText, encMainAddr, encSubAddr)
+
+	if args.Data == nil {
+		args.Data = new(hexutil.Bytes)
+	}
+
+	*args.Data = hexutil.Bytes(bytesData)[:]
+
+	// Assemble the transaction and sign with the wallet
+	tx := args.toTransaction()
+	signed, err := wallet.SignTx(account, tx, nil)
+	if err != nil {
+		return common.Hash{}, err
+	}
+	return submitTransaction(ctx, s.b, signed)
+
 }
 
 // fetchKeystore retrives the encrypted keystore from the account manager.
@@ -1672,6 +1750,7 @@ func GetABIBytesData(ABI string, name string, args ...interface{}) []byte {
 		abierror := fmt.Sprintf("abi.JSON error: %v", err)
 		log.Warn(abierror)
 	}
+
 	bytesData, err := creditAbi.Pack(name, args...)
 	if err != nil {
 		log.Error("Pack ABI failed!", err)

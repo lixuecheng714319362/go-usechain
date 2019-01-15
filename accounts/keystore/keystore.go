@@ -529,7 +529,7 @@ func (ks *KeyStore) GetAprivBaddress(a accounts.Account) (common.ABaddress, *ecd
 }
 
 // B is commitee's publickey
-var B = "0x04e524ec8293017832c2d1e29de5d4b857d15087646b88846fb92f749551e19fa1da92bcb54407cf6aac98670dc2bbb4b4043641a421d74a2d7e5535cd6d539f75"
+var B = "0x04334a10106c551d6bf6ee281653eab47fbe5fb68b100a9fb4c17e0193ee5285a46de19c81cc796df55d6a90fceaf47ea05a2c1591c24346b5a0554ed4bd4f31f9"
 
 // GenerateBaseABaddress combine A pubkey with B
 func GenerateBaseABaddress(A *ecdsa.PublicKey) *common.ABaddress {
